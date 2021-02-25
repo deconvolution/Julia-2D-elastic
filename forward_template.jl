@@ -14,7 +14,7 @@ else
 end
 include("./seismic2D_function.jl");
 ## load image
-vp=@ones(6000,6000)*2000;
+vp=@ones(4000,4000)*2000;
 nx,nz=size(vp);
 
 ##
@@ -73,7 +73,7 @@ if isdir(chop(p2,head=0,tail=3))==0
 end;
 ##for source_code=1
 @time begin
-source_code=1;
+    source_code=1;
     # source locations
     s1=s_s1[source_code];
     s3=s_s3[source_code];
@@ -125,40 +125,3 @@ source_code=1;
     path,
     save_wavefield);
 end
-## end
-    #=
-    write to gif
-    sources=[path 'pic/'];
-    delaytime=.2;
-    filename=['animation'];
-    gifmaker(filename,delaytime,sources);
-    # write recordings
-    ## recording saving
-    if ~exist([path '/rec/'],'dir')
-    mkdir([path '/rec/'])
-end
-
-DATA=rec_conversion(nt,nx,nz,dt,dx,dz,s1,s3,r1,r3);
-parsave([path '/rec/simu_info.mat'],DATA);
-
-DATA=R1;
-parsave([path '/rec/tR1.mat'],DATA);
-DATA=R3;
-parsave([path '/rec/tR3.mat'],DATA);
-DATA=P;
-parsave([path '/rec/tP.mat'],DATA);
-%% source saving
-%% recording saving
-if ~exist([path '/source/'],'dir')
-mkdir([path '/source/'])
-end
-DATA=src1;
-parsave([path '/source/src1.mat'],DATA);
-DATA=src3;
-parsave([path '/source/src3.mat'],DATA);
-DATA=source_type;
-parsave([path '/source/source_type.mat'],DATA);
-end
-toc;
-=#
-##
