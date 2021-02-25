@@ -153,15 +153,13 @@ end
     ts2=@zeros(nx,nz);
 
     l=1;
-    ts[CartesianIndex.(s1,s3)]=src1[1];
-    ts2[CartesianIndex.(s1,s3)]=src3[1];
-
-    if source_type=='D'
-        v1=v1+.5 ./C.rho .*ts;
-        v3=v3+.5 ./C.rho .*ts2;
+    @timeit ti "source" if source_type=='D'
+        v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+ .5 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l];
+        v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+ .5 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l];
     end
-    if source_type=='P'
-        @parallel add_P_source(dx,dz,C.rho,v1,v3,ts[2:end,:],ts2[:,2:end]);
+
+    @timeit ti "source" if source_type=='P'
+         p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l];
     end
 
     ## save wavefield
@@ -203,20 +201,14 @@ end
         @timeit ti "compute_v" @parallel compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11[2:end,:]-p[2:end,:],
         sigmas13,sigmas33[:,2:end]-p[:,2:end]);
 
-        @timeit ti "source" ts[CartesianIndex.(s1,s3)]=src1[l];
-        @timeit ti "source" ts2[CartesianIndex.(s1,s3)]=src3[l];
-        #=
         @timeit ti "source" if source_type=='D'
-            v1=v1+.5 ./C.rho .*ts;
-            v3=v3+.5 ./C.rho .*ts2;
+            v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+ 1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l];
+            v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+ 1 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l];
         end
 
         @timeit ti "source" if source_type=='P'
-             @parallel add_P_source(dx,dz,C.rho,v1,v3,ts[2:end,:],ts2[:,2:end]);
+             p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l];
         end
-        =#
-
-        p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l];
 
         # assign recordings
         @timeit ti "receiver" R1[l+1,:].=v1[CartesianIndex.(r1,r3)];
