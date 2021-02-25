@@ -14,7 +14,7 @@ else
 end
 include("./seismic2D_function.jl");
 ## load image
-vp=@ones(4000,4000)*2000;
+vp=@ones(600,600)*2000;
 nx,nz=size(vp);
 
 ##
@@ -22,7 +22,7 @@ nx,nz=size(vp);
 dt=10^-3;
 dx=10;
 dz=10;
-nt=100;
+nt=1000;
 nx=size(vp,1);
 nz=size(vp,2);
 
