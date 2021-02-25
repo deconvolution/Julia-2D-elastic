@@ -27,50 +27,47 @@ function rickerWave(freq,dt,ns,M)
     return ricker
 end
 ##
-@parallel function compute_sigma(dt,dx,dz,C11,C13,C33,C55,beta,v1,v1_3_2_end,v3,v3_1_2_end,
+@parallel function compute_sigma(dt,dx,dz,C11,C13,C33,C55,v1,v3,beta,
     sigmas11,sigmas13,sigmas33,p)
 
-    @inn(sigmas11)=dt*.5*((@all(C11)-@all(C13)) .*@d_xa(v1)/dx+
+    @inn(sigmas11)=dt*.5*((@all(C11)-@all(C13)) .*@d_xi(v1)/dx+
     (@all(C13)-@all(C33)) .*@d_yi(v3)/dz)+
     @inn(sigmas11)-
-    dt*@all(beta) .*@inn(sigmas11);
+    dt*@inn(beta) .*@inn(sigmas11);
 
     @inn(sigmas33)=dt*.5*((@all(C33)-@all(C13)) .*@d_yi(v3)/dz+
     (@all(C13)-@all(C11)) .*@d_xi(v1)/dx)+
     @inn(sigmas33)-
-    dt*@all(beta).*@inn(sigmas33);
+    dt*@inn(beta).*@inn(sigmas33);
 
-    @inn(sigmas13)=dt*(@all(C55) .*(@d_yi(v1_3_2_end)/dz+@d_xi(v3_1_2_end)/dx))+
-    @inn(sigmas13)-
-    dt*@all(beta).*@inn(sigmas13);
+    @all(sigmas13)=dt*(@all(C55) .*(@d_ya(v1)/dz+@d_xa(v3)/dx))+
+    @all(sigmas13)-
+    dt*@all(beta).*@all(sigmas13);
 
     # p
     @inn(p)=-dt*((@all(C11)+@all(C33))*.5 .*@d_xi(v1)/dx+
     (@all(C13)+@all(C33))*.5 .*@d_yi(v3)/dz)+
-    @inn(p)-
-    dt*@all(beta).*@inn(p);
+    @all(p)-
+    dt*@all(beta).*@all(p);
 
     return nothing
 end
 ##
-@parallel function compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11_minus_p_1_2_end,
-    sigmas13,sigmas33_minus_p_3_2_end)
+@parallel function compute_v(dt,dx,dz,rho,v1,v3,beta,
+    sigmas11,sigmas33,sigmas13,p)
 
-    @inn(v1)=dt./@all(rho) .*(@d_xi(sigmas11_minus_p_1_2_end)/dx+
-    @d_yi(sigmas13)/dz)+
+    @inn(v1)=dt ./@all(rho) .*((@d_xa(sigmas11)-@d_xa(p))/dx);
+
+    @inn(v1)=dt ./@inn(rho) .*(@d_yi(sigmas13)/dz)+
     @inn(v1)-
     dt*@all(beta) .*@inn(v1);
 
-    @inn(v3)=dt./@all(rho) .*(@d_xi(sigmas13)/dx+
-    @d_yi(sigmas33_minus_p_3_2_end)/dz)+
+    @inn(v3)=dt ./@all(rho) .*((@d_yi(sigmas33)-@d_yi(p))/dz);
+
+    @inn(v3)=dt ./@all(rho) .*@d_xi(sigmas13)/dx+
     @inn(v3)-
     dt*@all(beta) .*@inn(v3);
-    return nothing
-end
 
-@parallel function add_P_source(dx,dz,rho,v1,v3,ts_1_2_end,ts2_3_2_end)
-    @inn(v1)=@inn(v1)+.5 ./@all(rho) .*@d_xi(ts_1_2_end)/dx;
-    @inn(v3)=@inn(v3)+.5 ./@all(rho) .*@d_yi(ts2_3_2_end)/dz;
     return nothing
 end
 
@@ -142,15 +139,13 @@ end
     P=@zeros(nt,length(r3));
 
     # wave vector
-    v1=@zeros(nx,nz);
-    v3=@zeros(nx,nz);
+    v1=@zeros(nx,nz+1);
+    v3=@zeros(nx+1,nz);
 
-    sigmas11=@zeros(nx,nz);
+    sigmas11=@zeros(nx+1,nz);
     sigmas13=@zeros(nx,nz);
-    sigmas33=@zeros(nx,nz);
-    p=@zeros(nx,nz);
-    ts=@zeros(nx,nz);
-    ts2=@zeros(nx,nz);
+    sigmas33=@zeros(nx,nz+1);
+    p=@zeros(nx+1,nz+1);
 
     l=1;
     @timeit ti "source" if source_type=='D'
@@ -191,15 +186,14 @@ end
         write2mat(string(path,"/forward_wavefield/p_",l+1,".mat"),data);
     end
     ##
-    tt=@zeros(nx,nz);
 
     for l=2:nt-1
-        @timeit ti "compute_sigma" @parallel compute_sigma(dt,dx,dz,C.C11,C.C13,C.C33,C.C55,beta,v1,v1[:,2:end],
-        v3,v3[2:end,:],
+        @timeit ti "compute_sigma" @parallel compute_sigma(dt,dx,dz,C.C11,C.C13,
+        C.C33,C.C55,v1,v3,beta,
         sigmas11,sigmas13,sigmas33,p);
 
-        @timeit ti "compute_v" @parallel compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11[2:end,:]-p[2:end,:],
-        sigmas13,sigmas33[:,2:end]-p[:,2:end]);
+        @timeit ti "compute_v" @parallel compute_v(dt,dx,dz,rho,v1,v3,beta,
+            sigmas11,sigmas33,sigmas13,p);
 
         @timeit ti "source" if source_type=='D'
             v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+ 1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l];

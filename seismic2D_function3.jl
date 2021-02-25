@@ -30,7 +30,7 @@ end
 @parallel function compute_sigma(dt,dx,dz,C11,C13,C33,C55,beta,v1,v1_3_2_end,v3,v3_1_2_end,
     sigmas11,sigmas13,sigmas33,p)
 
-    @inn(sigmas11)=dt*.5*((@all(C11)-@all(C13)) .*@d_xa(v1)/dx+
+    @inn(sigmas11)=dt*.5*((@all(C11)-@all(C13)) .*@d_xi(v1)/dx+
     (@all(C13)-@all(C33)) .*@d_yi(v3)/dz)+
     @inn(sigmas11)-
     dt*@all(beta) .*@inn(sigmas11);
@@ -65,12 +65,6 @@ end
     @d_yi(sigmas33_minus_p_3_2_end)/dz)+
     @inn(v3)-
     dt*@all(beta) .*@inn(v3);
-    return nothing
-end
-
-@parallel function add_P_source(dx,dz,rho,v1,v3,ts_1_2_end,ts2_3_2_end)
-    @inn(v1)=@inn(v1)+.5 ./@all(rho) .*@d_xi(ts_1_2_end)/dx;
-    @inn(v3)=@inn(v3)+.5 ./@all(rho) .*@d_yi(ts2_3_2_end)/dz;
     return nothing
 end
 

@@ -12,19 +12,17 @@ ti=TimerOutput();
 else
     @init_parallel_stencil(Threads, Float64, 2);
 end
-include("./seismic2D_function.jl");
+include("./seismic2D_function3.jl");
 ## load image
-vp=@ones(300,300)*2000;
-nx,nz=size(vp);
-
+nx=200;
+nz=200;
+vp=@ones(nx,nz)*2000;
 ##
 # dimensions
-dt=10^-3;
+dt=10^-3/2;
 dx=10;
 dz=10;
 nt=1000;
-nx=size(vp,1);
-nz=size(vp,2);
 
 X=(1:nx)*dx;
 Z=-(1:nz)*dz;
@@ -102,7 +100,7 @@ end;
     r3t=maximum(Z)-dz .*r3;
 
     # source type. 'D' for directional source. 'P' for P-source.
-    source_type='D';
+    source_type='P';
 
     # plot source
     plot_source=1;
@@ -125,3 +123,28 @@ end;
     path,
     save_wavefield);
 end
+##
+A=zeros(5,4);
+B=[1 2 3 4; 4 4 4 4; 0 1 5 6;8 8 8 8;3 4 5 6];
+@parallel function f(A,B)
+    @inn(A)=@d_xi(B);
+    return nothing
+end
+
+@time @parallel f(A,B)
+##
+A2=@zeros(4,4);
+@parallel function h(A,B)
+    @all(A)=@inn_x(B);
+    return nothing
+end
+@parallel h(A2,B)
+##
+A2=[A;0 0 0 0];
+C=zeros(5,4);
+@parallel function g(A,B)
+    @all(A)=@inn_x(B);
+    return nothing
+end
+
+@time @parallel g(C,A2)
