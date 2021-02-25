@@ -5,6 +5,8 @@ using Dates
 const USE_GPU = false  # Use GPU? If this is set false, then no GPU needs to be available
 using ParallelStencil
 using ParallelStencil.FiniteDifferences2D
+using TimerOutputs
+ti=TimerOutput();
 @static if USE_GPU
     @init_parallel_stencil(CUDA, Float64, 2);
 else
@@ -12,7 +14,7 @@ else
 end
 include("./seismic2D_function.jl");
 ## load image
-vp=ones(600,600)*2000;
+vp=@ones(4000,4000)*2000;
 nx,nz=size(vp);
 
 ##
@@ -20,7 +22,7 @@ nx,nz=size(vp);
 dt=10^-3;
 dx=10;
 dz=10;
-nt=2000;
+nt=100;
 nx=size(vp,1);
 nz=size(vp,2);
 
@@ -40,7 +42,7 @@ nPML=2;
 Rc=.0001;
 
 # generate empty density
-rho=ones(nx,nz)*1;
+rho=@ones(nx,nz)*1;
 #rho=rho.*A;
 # Lame constants for solid
 mu=rho.*(vp/sqrt(3)).^2;
@@ -63,7 +65,7 @@ s_s1=[200];
 s_s3=ones(Int32,size(s_s1))*200;
 ##
 # point interval in time steps
-plot_interval=100;
+plot_interval=0;
 
 p2= @__FILE__;
 if isdir(chop(p2,head=0,tail=3))==0
@@ -87,7 +89,7 @@ source_code=1;
     src1=1*repeat(singles,1,length(s3));
 
     # give source signal to z direction
-    src3=src1;
+    src3=copy(src1);
     src3=1*repeat(singles,1,length(s3));
 
     # receiver locations [m]
@@ -100,7 +102,7 @@ source_code=1;
     r3t=maximum(Z)-dz .*r3;
 
     # source type. 'D' for directional source. 'P' for P-source.
-    source_type='P';
+    source_type='D';
 
     # plot source
     plot_source=1;
@@ -159,3 +161,4 @@ parsave([path '/source/source_type.mat'],DATA);
 end
 toc;
 =#
+##

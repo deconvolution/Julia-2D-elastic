@@ -74,7 +74,7 @@ end
     return nothing
 end
 
-function VTI_2D(dt,dx,dz,nt,nx,nz,
+@timeit ti "VTI_2D" function VTI_2D(dt,dx,dz,nt,nx,nz,
     X,Z,
     r1,r3,
     s1,s3,src1,src3,source_type,
@@ -195,33 +195,29 @@ function VTI_2D(dt,dx,dz,nt,nx,nz,
     ##
 
     for l=2:nt-1
-        v1_3_2_end=v1[:,2:end];
-        v3_1_2_end=v3[2:end,:];
-        @parallel compute_sigma(dt,dx,dz,C.C11,C.C13,C.C33,C.C55,beta,v1,v1[:,2:end],
+
+        @timeit ti "compute_sigma" @parallel compute_sigma(dt,dx,dz,C.C11,C.C13,C.C33,C.C55,beta,v1,v1[:,2:end],
         v3,v3[2:end,:],
         sigmas11,sigmas13,sigmas33,p);
 
-        sigmas11_minus_p_1_2_end=sigmas11[2:end,:]-p[2:end,:];
-        sigmas33_minus_p_3_2_end=sigmas33[:,2:end]-p[:,2:end];
+        @timeit ti "compute_v" @parallel compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11[2:end,:]-p[2:end,:],
+        sigmas13,sigmas33[:,2:end]-p[:,2:end]);
+        
+        @timeit ti "source" ts[CartesianIndex.(s1,s3)]=src1[l];
+        @timeit ti "source" ts2[CartesianIndex.(s1,s3)]=src3[l];
 
-        @parallel compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11_minus_p_1_2_end,
-        sigmas13,sigmas33_minus_p_3_2_end);
-
-        ts[CartesianIndex.(s1,s3)]=src1[l];
-        ts2[CartesianIndex.(s1,s3)]=src3[l];
-
-        if source_type=='D'
+        @timeit ti "source" if source_type=='D'
             v1=v1+.5 ./C.rho .*ts;
             v3=v3+.5 ./C.rho .*ts2;
         end
-        if source_type=='P'
-                @parallel add_P_source(dx,dz,C.rho,v1,v3,ts[2:end,:],ts2[:,2:end]);
+        @timeit ti "source" if source_type=='P'
+             @parallel add_P_source(dx,dz,C.rho,v1,v3,ts[2:end,:],ts2[:,2:end]);
         end
 
         # assign recordings
-        R1[l+1,:].=v1[CartesianIndex.(r1,r3)];
-        R3[l+1,:].=v3[CartesianIndex.(r1,r3)];
-        P[l+1,:].=p[CartesianIndex.(r1,r3)];
+        @timeit ti "receiver" R1[l+1,:].=v1[CartesianIndex.(r1,r3)];
+        @timeit ti "receiver" R3[l+1,:].=v3[CartesianIndex.(r1,r3)];
+        @timeit ti "receiver" P[l+1,:].=p[CartesianIndex.(r1,r3)];
         # save wavefield
         if save_wavefield==1
             data=v1;
@@ -237,7 +233,7 @@ function VTI_2D(dt,dx,dz,nt,nx,nz,
             data=p;
             write2mat(string(path,"/forward_wavefield/p_",l+1,".mat"),data);
         end
-        l2=l;
+
         # plot
         if plot_interval!=0
             if mod(l,plot_interval)==0 || l==nt-1
