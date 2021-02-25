@@ -202,17 +202,21 @@ end
 
         @timeit ti "compute_v" @parallel compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11[2:end,:]-p[2:end,:],
         sigmas13,sigmas33[:,2:end]-p[:,2:end]);
-        
+
         @timeit ti "source" ts[CartesianIndex.(s1,s3)]=src1[l];
         @timeit ti "source" ts2[CartesianIndex.(s1,s3)]=src3[l];
-
+        #=
         @timeit ti "source" if source_type=='D'
             v1=v1+.5 ./C.rho .*ts;
             v3=v3+.5 ./C.rho .*ts2;
         end
+
         @timeit ti "source" if source_type=='P'
              @parallel add_P_source(dx,dz,C.rho,v1,v3,ts[2:end,:],ts2[:,2:end]);
         end
+        =#
+
+        p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l];
 
         # assign recordings
         @timeit ti "receiver" R1[l+1,:].=v1[CartesianIndex.(r1,r3)];
