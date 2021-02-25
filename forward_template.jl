@@ -61,11 +61,11 @@ C=C2(lambda+2*mu,lambda,lambda+2*mu,mu,rho);
 # magnitude
 M=2.7;
 
-s_s1=[200];
-s_s3=ones(Int32,size(s_s1))*200;
+s_s1=Int(round(nx/2));
+s_s3=Int(round(nz/2));
 ##
 # point interval in time steps
-plot_interval=0;
+plot_interval=100;
 
 p2= @__FILE__;
 if isdir(chop(p2,head=0,tail=3))==0

@@ -193,7 +193,6 @@ end
     ##
 
     for l=2:nt-1
-
         @timeit ti "compute_sigma" @parallel compute_sigma(dt,dx,dz,C.C11,C.C13,C.C33,C.C55,beta,v1,v1[:,2:end],
         v3,v3[2:end,:],
         sigmas11,sigmas13,sigmas33,p);
@@ -231,6 +230,7 @@ end
         end
 
         # plot
+        l2=l;
         if plot_interval!=0
             if mod(l,plot_interval)==0 || l==nt-1
                 mat"
