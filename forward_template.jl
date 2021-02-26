@@ -14,12 +14,12 @@ else
 end
 include("./seismic2D_function3.jl");
 ## load image
-nx=200;
-nz=200;
+nx=400;
+nz=400;
 vp=@ones(nx,nz)*2000;
 ##
 # dimensions
-dt=10^-3/2;
+dt=10^-3;
 dx=10;
 dz=10;
 nt=1000;
@@ -124,27 +124,3 @@ end;
     save_wavefield);
 end
 ##
-A=zeros(5,4);
-B=[1 2 3 4; 4 4 4 4; 0 1 5 6;8 8 8 8;3 4 5 6];
-@parallel function f(A,B)
-    @inn(A)=@d_xi(B);
-    return nothing
-end
-
-@time @parallel f(A,B)
-##
-A2=@zeros(4,4);
-@parallel function h(A,B)
-    @all(A)=@inn_x(B);
-    return nothing
-end
-@parallel h(A2,B)
-##
-A2=[A;0 0 0 0];
-C=zeros(5,4);
-@parallel function g(A,B)
-    @all(A)=@inn_x(B);
-    return nothing
-end
-
-@time @parallel g(C,A2)
