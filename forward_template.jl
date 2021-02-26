@@ -14,15 +14,15 @@ else
 end
 include("./seismic2D_function.jl");
 ## load image
-nx=400;
-nz=400;
+nx=300;
+nz=300;
 vp=@ones(nx,nz)*2000;
 ##
 # dimensions
 dt=10^-3;
 dx=10;
 dz=10;
-nt=1000;
+nt=4000;
 
 X=(1:nx)*dx;
 Z=-(1:nz)*dz;

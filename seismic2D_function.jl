@@ -252,7 +252,7 @@ if save_wavefield==1
 end
 
 # plot
-l2=l;
+l2=Float32(l);
 if plot_interval!=0
     if mod(l,plot_interval)==0 || l==nt-1
         mat"
