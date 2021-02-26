@@ -12,7 +12,7 @@ ti=TimerOutput();
 else
     @init_parallel_stencil(Threads, Float64, 2);
 end
-include("./seismic2D_function3.jl");
+include("./seismic2D_function.jl");
 ## load image
 nx=400;
 nz=400;
