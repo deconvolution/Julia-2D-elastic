@@ -62,12 +62,6 @@ end
 out[ix,:]=in[ix,2:end];
 return nothing
 end
-#=
-@parallel function z_2_end(in,out)
-out=in[:,2:end];
-return nothing
-end
-=#
 ##
 @parallel function compute_v(dt,dx,dz,rho,v1,v3,beta,sigmas11_minus_p_1_2_end,
     sigmas13,sigmas33_minus_p_3_2_end)
