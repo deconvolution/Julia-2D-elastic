@@ -1,0 +1,4 @@
+name = "HelloWorld"
+uuid = "fd539647-2d6a-4a08-b59d-64cf78300001"
+authors = ["Yi Zhang <zhang9@outlook.de>"]
+version = "0.1.0"
