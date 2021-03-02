@@ -13,6 +13,7 @@ else
     @init_parallel_stencil(Threads, Float64, 2);
 end
 include("./seismic2D_function.jl");
+Threads.nthreads()
 ## timing
 ti=TimerOutput();
 ## define model parameters
@@ -89,7 +90,7 @@ s_src3=copy(s_src1);
 s_src3=1*repeat(singles,1,length(s_s3));
 
 # source type. 'D' for directional source. 'P' for P-source.
-s_source_type=["D" "P"];
+s_source_type=["P" "D"];
 ## receiver
 # receiver locations grid
 r1=ones(Int32,1,10);
@@ -114,13 +115,11 @@ end;
 ## initialize seismograms
 R1=zeros(Float32,nt,length(r3));
 R3=copy(R1);
+P=copy(R1);
+data=zeros(nt,length(r3));
 ##
 @time begin
     if msot==1
-        # source locations
-        s1=s_s1;
-        s3=s_s3;
-
         # path for this source
         path=string(chop(p2,head=0,tail=3),"/multiple_source/");
         if isdir(string(path))==0
@@ -130,6 +129,7 @@ R3=copy(R1);
             mkdir(string(path,"/rec/"));
         end;
 
+        # source locations
         s1=s_s1;
         s3=s_s3;
 
@@ -138,7 +138,7 @@ R3=copy(R1);
 
         src1=s_src1;
         src3=s_src3;
-        source_type=s_source_type;
+        source_type=s_source_type[1];
 
         # pass parameters to solver
         v1,v3,R1,R3,P=VTI_2D(dt,dx,dz,nt,nx,nz,
@@ -177,8 +177,8 @@ R3=copy(R1);
 
 
             s1=s_s1[source_code];
-            s3=s_s3[:,source_code];
-
+            s3=s_s3[source_code];
+            
             s1t=s_s1t[source_code];
             s3t=s_s3t[source_code];
 

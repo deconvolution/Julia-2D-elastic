@@ -93,6 +93,8 @@ end
     save_wavefield)
 
     d0=Dates.now();
+    # source number
+    ns=length(s3);
 
     #create folder for figures
     if isdir(path)==0
@@ -197,15 +199,22 @@ end
         sigmas13,sigmas33_minus_p_3_2_end);
 
         @timeit ti "source" if source_type=="D"
-        v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+
-        1 ./C.rho[CartesianIndex.(s1,s3)] .*reshape(src1[l,:],1,length(s3));
-        v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+
-        1 ./C.rho[CartesianIndex.(s1,s3)] .*reshape(src3[l,:],1,length(s3));
+        if ns==1
+        v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l];
+        v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l];
+    else
+        v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l,:];
+        v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l,:];
+    end
         end
 
-    @timeit ti "source" if source_type=="P"
-    p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+reshape(src3[l,:],1,length(s3));
+        @timeit ti "source" if source_type=="P"
+        if ns==1
+        p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l];
+    else
+        p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l,:];
     end
+        end
 
     # assign recordings
     @timeit ti "receiver" R1[l+1,:]=reshape(v1[CartesianIndex.(r1,r3)],length(r3),);
@@ -228,7 +237,6 @@ end
     end
 
     # plot
-    l2=Float32(l);
     if plot_interval!=0
         if mod(l,plot_interval)==0 || l==nt-1
             heatmap((1:nx) .*dx .+minimum(X), reverse(maximum(Z) .-(1:nz) .*dz),v3',
