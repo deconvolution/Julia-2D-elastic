@@ -18,16 +18,19 @@ Threads.nthreads()
 ti=TimerOutput();
 ## define model parameters
 nx=200;
-nz=200;
+nz=100;
 dt=10^-3;
 dx=10;
 dz=10;
-nt=1000;
+nt=800;
 
 X=(1:nx)*dx;
 Z=-(1:nz)*dz;
 
 vp=@ones(nx,nz)*2000;
+
+vp[:,1:42] .=340;
+vp[:,end-41:end] .=340;
 
 # PML layers
 lp=20;
@@ -45,8 +48,10 @@ Rc=.0001;
 rho=@ones(nx,nz)*1;
 
 # Lame constants for solid
-mu=rho.*(vp/sqrt(3)).^2;
+mu=0*rho.*(vp/sqrt(3)).^2;
 lambda=rho.*vp.^2;
+
+rho=@ones(nx,nz)*1;
 ## assign stiffness matrix and rho
 mutable struct C2
     C11
@@ -62,12 +67,8 @@ C=C2(lambda+2*mu,lambda,lambda+2*mu,mu,rho);
 msot=0;
 
 # source location grid
-s_s1=zeros(Int32,1,2);
-s_s1[1]=50;
-s_s1[2]=100;
-s_s3=zeros(Int32,1,2);
-s_s3[1]=Int(round(nz/2));
-s_s3[2]=Int(round(nz/2));
+s_s1=[Int32(round(nx/2))];
+s_s3=[Int32(round(nz/2))];
 
 # source locations true
 s_s1t=dx .*s_s1;
@@ -83,14 +84,14 @@ singles=rickerWave(freq,dt,nt,M);
 
 # give source signal to x direction
 s_src1=zeros(Float32,nt,1);
-s_src1=1*repeat(singles,1,length(s_s3));
+s_src1=0*repeat(singles,1,length(s_s3));
 
 # give source signal to z direction
 s_src3=copy(s_src1);
 s_src3=1*repeat(singles,1,length(s_s3));
 
 # source type. 'D' for directional source. 'P' for P-source.
-s_source_type=["P" "D"];
+s_source_type="D";
 ## receiver
 # receiver locations grid
 r1=ones(Int32,1,10);
@@ -138,7 +139,7 @@ data=zeros(nt,length(r3));
 
         src1=s_src1;
         src3=s_src3;
-        source_type=s_source_type[1];
+        source_type=s_source_type;
 
         # pass parameters to solver
         v1,v3,R1,R3,P=VTI_2D(dt,dx,dz,nt,nx,nz,
@@ -178,7 +179,7 @@ data=zeros(nt,length(r3));
 
             s1=s_s1[source_code];
             s3=s_s3[source_code];
-            
+
             s1t=s_s1t[source_code];
             s3t=s_s3t[source_code];
 

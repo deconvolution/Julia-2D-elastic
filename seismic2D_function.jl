@@ -113,7 +113,7 @@ end
             mkdir(string(path,"/forward_pic/"))
         end
     end
-
+    
     # PML
     vmax=sqrt.((C.C33) ./C.rho);
     beta0=(ones(nx,nz) .*vmax .*(nPML+1) .*log(1/Rc)/2/lp/dx);
@@ -157,6 +157,9 @@ end
     sigmas13=@zeros(nx,nz);
     sigmas33=@zeros(nx,nz);
     p=@zeros(nx,nz);
+
+    # stagger density
+
 
     l=1;
     # save wavefield
@@ -203,8 +206,8 @@ end
         v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l];
         v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l];
     else
-        v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l,:];
-        v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l,:];
+        v1[CartesianIndex.(s1,s3)]=v1[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src1[l,:]';
+        v3[CartesianIndex.(s1,s3)]=v3[CartesianIndex.(s1,s3)]+1 ./C.rho[CartesianIndex.(s1,s3)] .*src3[l,:]';
     end
         end
 
@@ -212,7 +215,7 @@ end
         if ns==1
         p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l];
     else
-        p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l,:];
+        p[CartesianIndex.(s1,s3)]=p[CartesianIndex.(s1,s3)]+src3[l,:]';
     end
         end
 
