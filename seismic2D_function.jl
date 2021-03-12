@@ -113,7 +113,7 @@ end
             mkdir(string(path,"/forward_pic/"))
         end
     end
-    
+
     # PML
     vmax=sqrt.((C.C33) ./C.rho);
     beta0=(ones(nx,nz) .*vmax .*(nPML+1) .*log(1/Rc)/2/lp/dx);
@@ -246,10 +246,11 @@ end
             xaxis="x [m]",
             yaxis="z [m]",
             title=string("t =",l*dt,"s","\n v3[m/s]"));
+            
             plot!(reshape(r1t,length(r1t),),
             reshape(r3t,length(r3t),),
-            linestyle = :dot,linealpha = 0.5,
-            linewidth = 4,linecolor = :blue,
+            seriestype = :scatter,
+            seriescolor = :white,
             label="receiver");
             savefig(string(path,"./forward_pic/v3_",n_picture,".png"));
             #=

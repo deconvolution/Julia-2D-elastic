@@ -17,20 +17,20 @@ Threads.nthreads()
 ## timing
 ti=TimerOutput();
 ## define model parameters
-nx=200;
-nz=100;
+nx=300;
+nz=200;
 dt=10^-3;
 dx=10;
 dz=10;
-nt=800;
+nt=2000;
 
 X=(1:nx)*dx;
 Z=-(1:nz)*dz;
 
 vp=@ones(nx,nz)*2000;
 
-vp[:,1:42] .=340;
-vp[:,end-41:end] .=340;
+vp[:,1:29] .=340;
+vp[:,end-29:end] .=0;
 
 # PML layers
 lp=20;
@@ -67,8 +67,10 @@ C=C2(lambda+2*mu,lambda,lambda+2*mu,mu,rho);
 msot=0;
 
 # source location grid
-s_s1=[Int32(round(nx/2))];
-s_s3=[Int32(round(nz/2))];
+s_s1=zeros(Int32,1,2);
+s_s3=copy(s_s1);
+s_s1[:] =[100 200];
+s_s3[:] =[80 80];
 
 # source locations true
 s_s1t=dx .*s_s1;
@@ -91,14 +93,14 @@ s_src3=copy(s_src1);
 s_src3=1*repeat(singles,1,length(s_s3));
 
 # source type. 'D' for directional source. 'P' for P-source.
-s_source_type="D";
+s_source_type=["P" "P"];
 ## receiver
 # receiver locations grid
-r1=ones(Int32,1,10);
-r1[:]=30:10:120;
+r1=ones(Int32,1,2);
+r1[:] = [40 80];
 
-r3=ones(Int32,1,10);
-r3[:] .= 30;
+r3=ones(Int32,1,2);
+r3[:] = [32 32];
 
 # receiver locations true
 r1t=dx .*r1;
@@ -118,11 +120,14 @@ R1=zeros(Float32,nt,length(r3));
 R3=copy(R1);
 P=copy(R1);
 data=zeros(nt,length(r3));
+global path,v1,v3,R1,R3,P
 ##
 @time begin
+
     if msot==1
+        global s1,s3,s1t,s3t,src1,src3,source_type,v1,v3,R1,R3,P,path
         # path for this source
-        path=string(chop(p2,head=0,tail=3),"/multiple_source/");
+        global path=string(chop(p2,head=0,tail=3),"/multiple_source/");
         if isdir(string(path))==0
             mkdir(string(path));
         end;
@@ -162,6 +167,7 @@ data=zeros(nt,length(r3));
         write2mat(string(path,"/rec/rec_p.mat"),data);
     else
         for source_code=1:length(s_s3)
+            global s1,s3,s1t,s3t,src1,src3,source_type,v1,v3,R1,R3,P,path
             # source locations
             s1=s_s1[source_code];
             s3=s_s3[source_code];
@@ -169,13 +175,13 @@ data=zeros(nt,length(r3));
             # path for this source
             path=string(chop(p2,head=0,tail=3),"/source_code_",
             (source_code),"/");
+
             if isdir(string(path))==0
                 mkdir(string(path));
             end;
             if isdir(string(path,"/rec/"))==0
                 mkdir(string(path,"/rec/"));
             end;
-
 
             s1=s_s1[source_code];
             s3=s_s3[source_code];
@@ -186,6 +192,7 @@ data=zeros(nt,length(r3));
             src1=s_src1[:,source_code];
             src3=s_src3[:,source_code];
             source_type=string(s_source_type[source_code]);
+
 
             # pass parameters to solver
             v1,v3,R1,R3,P=VTI_2D(dt,dx,dz,nt,nx,nz,
@@ -200,12 +207,20 @@ data=zeros(nt,length(r3));
             path,
             save_wavefield);
 
-            data=R1;
+            global data=R1;
             write2mat(string(path,"/rec/rec_1.mat"),data);
-            data=R3;
+            global data=R3;
             write2mat(string(path,"/rec/rec_3.mat"),data);
-            data=P;
+            global data=P;
             write2mat(string(path,"/rec/rec_p.mat"),data);
+
+
         end
     end
 end
+## plot seismograms
+file=matopen(string(path,"rec/rec_3.mat"));
+tt=read(file,"data"); # note that this does NOT introduce a variable ``varname`` into scope
+close(file);
+ir=1;
+plot(dt:dt:dt*nt,tt[:,ir])
